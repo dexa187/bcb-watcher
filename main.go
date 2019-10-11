@@ -29,7 +29,7 @@ type LogTransfer struct {
 func main() {
 
 	contractPtr := flag.String("contract", "0x392b695c3da2D86ec5284fAe2D152231876a3548", "Address of BCB Contract")
-	walletPtr := flag.String("wallet", "0xbCb0Ba1101000000000000000000000000000000", "Address of the Wallet to Watch")
+	walletPtr := flag.String("wallet", "0xBa11010000000000000000000000000000000000", "Address of the Wallet to Watch")
 	wsURLPtr := flag.String("wsURL", "wss://dai-trace-ws.blockscout.com/ws", "Websocket URL of blockchain node")
 	outputPtr := flag.String("output", "kv", "Output mode kv or json")
 
@@ -69,7 +69,15 @@ func main() {
 	for {
 		select {
 		case err := <-sub.Err():
-			log.Fatal(err)
+			// Connection Error Reconnect and Subscribe
+			client, err := ethclient.Dial(*wsURLPtr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			sub, err = client.SubscribeFilterLogs(context.Background(), query, logs)
+			if err != nil {
+				log.Fatal(err)
+			}
 		case vLog := <-logs:
 
 			// We are only watching for TransferWithData events so all logs will be the same event type.
@@ -84,10 +92,10 @@ func main() {
 			transferEvent.To = common.HexToAddress(vLog.Topics[2].Hex())
 			switch *outputPtr {
 			case "kv":
-				fmt.Printf("From=%s To=%s Tokens=%s\n Data=%s", transferEvent.From.Hex(), transferEvent.To.Hex(), transferEvent.Tokens.String(), string(transferEvent.Data))
+				fmt.Printf("From=%s To=%s Tokens=%s\n Data=%s\n", transferEvent.From.Hex(), transferEvent.To.Hex(), transferEvent.Tokens.String(), string(transferEvent.Data))
 			case "json":
 				out, _ := json.Marshal(transferEvent)
-				fmt.Printf(string(out))
+				fmt.Println(string(out))
 			}
 
 		}
