@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"strings"
 
-	token "./contracts"
+	token "github.com/dexa187/bcb-watcher/contracts"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
